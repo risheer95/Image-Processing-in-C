@@ -398,12 +398,10 @@ double *calculate_harlick_parameters(double **P, int data_max_gray, double *fx)
        		else
        			Pxminusy[j-i] = Pxminusy[j-i]+P[i][j];
 
-       		u = u+ i*j*P[i][j];
-
-       	}
+      	}
     }
 
-
+    u = 0.5* ux+ 0.5*uy;
 
     sx = 0; sy = 0;
     for(i=0; i<data_max_gray; i++)
@@ -449,7 +447,7 @@ double *calculate_harlick_parameters(double **P, int data_max_gray, double *fx)
 
        printf("ux = %g\tuy = %g\tsx = %g\tsy=%g\n",ux,uy,sx,sy);
        printf("HXY1 = %g\tHXY2 = %g\tHX = %g\tHY = %g\n",HXY1,HXY2,HX,HY);
-
+    printf("u = %f\n",u);
 
     for(i=0; i<14; i++)
         fx[i]=0;
@@ -509,6 +507,14 @@ double *calculate_harlick_parameters(double **P, int data_max_gray, double *fx)
     fx[11] = (fx[8]-HXY1)/t;
     fx[12] = sqrt(1-exp(-2*(HXY2 - fx[8])));
 
+    printf("The Q thing\n");
+	for(i=0; i<data_max_gray; i++)
+    	{
+    		for(j=0; j<data_max_gray; j++)
+    		{
+    printf("%f\t\t",Q[i][j]);		}
+    	printf("\n");}
+
 
     return fx;
 
@@ -518,7 +524,7 @@ double *calculate_harlick_parameters(double **P, int data_max_gray, double *fx)
 /* To create co-occurance matrix */
 void create_cooccurance_matrix(PGMData *data, int delta, int angle)
 {
-	printf("Come on I don't crash\n");
+	//printf("Come on I don't crash\n");
     int delx, dely;
     if(angle == 0)
     {
@@ -563,7 +569,7 @@ void create_cooccurance_matrix(PGMData *data, int delta, int angle)
                     temp1 = (x+delx >= 0)? x+delx:-1;
                     temp2 = (y+dely >= 0)? y+dely:-1;
                     if(temp1>=0 && temp2 >=0)
-    				if((data->pixels[x][y]==i && data->pixels[temp1][temp2]==j))// || (data->pixels[x][y]==j && data->pixels[temp1][temp2]==i))
+    				if((data->pixels[x][y]==i && data->pixels[temp1][temp2]==j) || (data->pixels[x][y]==j && data->pixels[temp1][temp2]==i))
     				    P[i][j]=P[i][j]+1;
     			}
     		}
