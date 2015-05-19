@@ -569,7 +569,8 @@ void create_cooccurance_matrix(PGMData *data, int delta, int angle)
                     temp1 = (x+delx >= 0)? x+delx:-1;
                     temp2 = (y+dely >= 0)? y+dely:-1;
                     if(temp1>=0 && temp2 >=0)
-    				if((data->pixels[x][y]==i && data->pixels[temp1][temp2]==j) || (data->pixels[x][y]==j && data->pixels[temp1][temp2]==i))
+                                /* Uncomment rest of line and remove last closing bracket  |  to get symmetrical matrix*/ 
+    				if((data->pixels[x][y]==i && data->pixels[temp1][temp2]==j))//|| (data->pixels[x][y]==j && data->pixels[temp1][temp2]==i))
     				    P[i][j]=P[i][j]+1;
     			}
     		}
