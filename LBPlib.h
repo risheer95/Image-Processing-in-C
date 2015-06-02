@@ -68,14 +68,16 @@ void calculate_histogram(PGMData *data, int *h)
 	for(i=0; i<data->max_gray; i++)
 	{
 		h[i] = h_k(data,i);
-		printf("%d %d\n",i,h[i]);
+//		printf("%d %d\n",i,h[i]);
 	}
-printf("\n");
+//printf("\n");
 }
 /*Function that returns the LBP matrix of a given image
  * Arguments: data: The PGM data
  *            radius: The radius of window to be considered
- *            no_of_points: No of points in the window*/
+ *            no_of_points: No of points in the window
+ *
+ */
 PGMData calculate_LBP(PGMData *data, int radius, int no_of_points)
 {
 	printf("Finding the LBP Matrix\n");
@@ -139,6 +141,12 @@ PGMData calculate_LBP(PGMData *data, int radius, int no_of_points)
 
 	return result;
 }
+
+/*Function that returns the Rotational Invariant Uniform LBP matrix of a given image
+ * Arguments: data: The PGM data
+ *            radius: The radius of window to be considered
+ *            no_of_points: No of points in the window
+ */
 
 PGMData calculate_LBPriu2(PGMData *data, int radius, int no_of_points)
 {
@@ -209,9 +217,15 @@ PGMData calculate_LBPriu2(PGMData *data, int radius, int no_of_points)
 
 }
 
-PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
+/*Function that returns the LBP matrix of a given image
+ * Arguments: data: The PGM data
+ *            radius: The radius of window to be considered
+ *            no_of_points: No of points in the window
+ *                       f: An array to store the Haralick parameters
+ */
+double *calculate_completed_LBP(PGMData *data, int radius, int no_of_points, double f[39])
 {
-	printf("Finding the Completed LBP Matrix\n");
+	printf("\nFinding the Completed LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double average=0;
 	for(i=0; i<data->width; i++)
@@ -224,9 +238,9 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 	average = average/(data->width * data->height);
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **clbp_s, **clbp_m, **clbp_c;
-	clbp_s = allocate_dynamic_matrix(data->width, data->height);
-	clbp_m = allocate_dynamic_matrix(data->width, data->height);
-	clbp_c = allocate_dynamic_matrix(data->width, data->height);
+	clbp_s = allocate_dynamic_matrix((data->width-2*radius)/(2*radius+1), (data->height-2*radius)/(2*radius+1));
+	clbp_m = allocate_dynamic_matrix((data->width-2*radius)/(2*radius+1), (data->height-2*radius)/(2*radius+1));
+	clbp_c = allocate_dynamic_matrix((data->width-2*radius)/(2*radius+1), (data->height-2*radius)/(2*radius+1));
 
 	int Sp[16], Mp[16];
 	for(j=0+radius; j<(data->width-radius); j=j+2*radius+1)
@@ -235,7 +249,12 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 	    {
 	    	clbp_s[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]=0;
 	    	clbp_m[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]=0;
-
+	    }
+	}
+	for(j=0+radius; j<(data->width-radius); j=j+2*radius+1)
+	{
+	    for(k=0+radius; k<(data->height-radius); k=k+2*radius+1)
+	    {
 	    	for(i=0; i<no_of_points; i++)
 	        {
 		        dely = ceil(sin(del_theta*i)*radius);
@@ -251,8 +270,9 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 		        else
 		        	kdash = k;
 
-		        Sp[i] = S(data->pixels[jdash][kdash],0);
-		        Mp[i] = t(data->pixels[jdash][kdash],data->pixels[j][k]);
+		        Sp[i] = (data->pixels[jdash][kdash]>=data->pixels[j][k])?1:0;
+		        Mp[i] = (data->pixels[jdash][kdash]>=average)?1:0;
+
 		        clbp_s[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]+=Sp[i];
 		        clbp_m[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]+=Mp[i];
 		    }
@@ -267,9 +287,6 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 
 	result.pixels = allocate_dynamic_matrix(result.width, result.height);
 
-	int h_c[2100], h_m[2100], h_s[2100];
-    int ver=1;
-    int max = 0;
 	for(i=0; i<result.width; i++)
 	{
 		for(j=0; j<result.height; j++)
@@ -277,19 +294,35 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 			result.pixels[i][j] = clbp_c[i][j];
 		}
 	}
+    double f1[13],f2[13],f3[13];
 
-	calculate_histogram(&result,h_c);
+    create_cooccurance_matrix(&result,1,0,f1);
+//	calculate_histogram(&result,h_c);
+    deallocate_dynamic_matrix(result.pixels,result.height);
+	result.width = (data->width-2*radius)/(2*radius+1);
+	result.height = (data->height-2*radius)/(2*radius+1);
+	result.max_gray = data->max_gray;
 
+	result.pixels = allocate_dynamic_matrix(result.width, result.height);
 
 	for(i=0; i<result.width; i++)
 	{
 		for(j=0; j<result.height; j++)
 		{
 			result.pixels[i][j] = clbp_m[i][j];
+//			printf("%d ",clbp_m[i][j]);
 		}
 	}
-	calculate_histogram(&result,h_m);
-	writePGM("clbpm.pgm",&result,ver);
+    create_cooccurance_matrix(&result,1,0,f2);
+
+//	calculate_histogram(&result,h_m);
+//	writePGM("clbpm.pgm",&result,ver);
+    deallocate_dynamic_matrix(result.pixels,result.height);
+	result.width = (data->width-2*radius)/(2*radius+1);
+	result.height = (data->height-2*radius)/(2*radius+1);
+	result.max_gray = data->max_gray;
+
+	result.pixels = allocate_dynamic_matrix(result.width, result.height);
 
 	for(i=0; i<result.width; i++)
 	{
@@ -298,60 +331,41 @@ PGMData calculate_completed_LBP(PGMData *data, int radius, int no_of_points)
 			result.pixels[i][j] = clbp_s[i][j];
 		}
 	}
-	calculate_histogram(&result,h_s);
+    create_cooccurance_matrix(&result,1,0,f3);
+
+//	calculate_histogram(&result,h_s);
+    for(i=0; i<13; i++)
+    {
+    	f[i] = f1[i];
+    	f[i+13] = f2[i];
+    	f[i+26] = f3[i];
+    }
 
 	deallocate_dynamic_matrix(clbp_s, result.height);
 	deallocate_dynamic_matrix(clbp_c, result.height);
 	deallocate_dynamic_matrix(clbp_m, result.height);
 
 	deallocate_dynamic_matrix(result.pixels, result.height);
-	result.height = 30;
-	result.width = result.max_gray;
 
-	result.pixels = allocate_dynamic_matrix(result.width, result.height);
-
-
-	for(i=0; i<result.max_gray; i++)
-	{
-		if(h_c[i]>max)
-			max = h_c[i];
-		if(h_m[i]>max)
-			max = h_m[i];
-		if(h_s[i]>max)
-			max = h_s[i];
-		for(j=0; j<10; j++)
-		{
-			result.pixels[i][j] = h_c[i];
-		}
-
-		for(j=10; j<20; j++)
-		{
-			result.pixels[i][j] = h_m[i];
-		}
-
-		for(j=20; j<30; j++)
-		{
-			result.pixels[i][j] = h_s[i];
-		}
-	}
-    result.max_gray = max;
-	writePGM("Histogram.pgm",&result,ver);
-	return result;
+//	writePGM("Histogram.pgm",&result,ver);
+	return f;
 }
 
 
-/* Function to find the co-occurrence of adjacent LBP of a pic
- *  Returns a 3D array
+/*Function that returns the Co-occurrence of Adjacent LBP matrix of a given image
+ * Arguments: data: The PGM data
+ *            radius: The radius of window to be considered
+ *            no_of_points: No of points in the window
+ *            f: To store the Haralick parameters
  */
-int ***calculate_CoALBP(PGMData *data, int radius, int no_of_points)
+double *calculate_CoALBP(PGMData *data, int radius, int no_of_points, double f[13])
 {
 
-	printf("Finding the LBP Matrix\n");
+	printf("\nFinding the LBP Matrix\n");
 	int i,j,k, jdash, kdash;
-	int ***P;
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **lbp;
-	lbp = allocate_dynamic_matrix(data->width, data->height);
+	lbp = allocate_dynamic_matrix((data->width-2*radius)/(2*radius+1), (data->height-2*radius)/(2*radius+1));
 
 	for(j=0+radius; j<(data->width-radius); j=j+2*radius+1)
 	{
@@ -384,71 +398,33 @@ int ***calculate_CoALBP(PGMData *data, int radius, int no_of_points)
 	    }
 	}
 
-    P = (int ***)malloc((2*(data->width - 2*radius)/(2*radius+1)) *sizeof(int**));
-
-	 for (i = 0; i< (2*(data->width - 2*radius)/(2*radius+1)); i++)
-	 {
-         P[i] = (int **) malloc((2*(data->height - 2*radius)/(2*radius+1))*sizeof(int *));
-         for (j = 0; j < (2*(data->height - 2*radius)/(2*radius+1)); j++)
-         {
-              P[i][j] = (int *)malloc(2*sizeof(int));
-         }
-	 }
-
-	for(i=0; i<4; i++)
+    PGMData result;
+    result.width = (data->width - 2*radius)/(2*radius+1);
+    result.height = (data->height - 2*radius)/(2*radius+1);
+    int max=lbp[0][0];
+	for(j=0; j<(data->width - 2*radius)/(2*radius+1)-1; j++)
 	{
-
-		for(j=0; j<(data->width - 2*radius)/(2*radius+1); j++)
+		for(k=0; k<(data->height - 2*radius)/(2*radius+1)-1; k++)
 		{
-			for(k=0; k<(data->height - 2*radius)/(2*radius+1); k++)
-			{
-				int dx = ceil(radius*cos(3.14159265*i));
-				int dy = ceil(radius*sin(3.14159265*i));
-
-				if(dx<0 && j+dx <radius) dx = 0;
-				else if(dx>0 && j+dx >=(data->width - 2*radius)/(2*radius+1)) dx=0;
-				else dx = ceil(radius*cos(3.14159265*i));
-
-				if(dy<0 && k+dy <radius) dy = 0;
-				else if(dy>0 && k+dy >=(data->height - 2*radius)/(2*radius+1)) dy=0;
-				else dy = ceil(radius*sin(3.14159265*i));
-
-				if(i==0)
-				{
-					P[j][k][0] = lbp[j][k];
-					P[j][k][1] = lbp[j+dx][k+dy];
-				}
-				if(i==1)
-				{
-					P[j+(data->width - 2*radius)/(2*radius+1)][k][0] = lbp[j][k];
-					P[j+(data->width - 2*radius)/(2*radius+1)][k][1] = lbp[j+dx][k+dy];
-				}
-				if(i==2)
-				{
-					P[j][k+(data->height - 2*radius)/(2*radius+1)][0] = lbp[j][k];
-					P[j][k+(data->height - 2*radius)/(2*radius+1)][1] = lbp[j+dx][k+dy];
-				}
-				if(i==3)
-				{
-					P[j+(data->width - 2*radius)/(2*radius+1)][k+(data->height - 2*radius)/(2*radius+1)][0] = lbp[j][k];
-					P[j+(data->width - 2*radius)/(2*radius+1)][k+(data->height - 2*radius)/(2*radius+1)][1] = lbp[j+dx][k+dy];
-				}
-				printf("(%d,%d,%d) \t",i,j,k);
-			}
+			if(max<lbp[j][k]) max = lbp[j][k];
 		}
-
 	}
 
-	for(j=0; j<2*(data->width - 2*radius)/(2*radius+1)-1; j++)
+    result.max_gray = max;
+//    printf("\nMax = %d\n",max);
+    result.pixels = allocate_dynamic_matrix(result.width, result.height);
+	for(j=0; j<(data->width - 2*radius)/(2*radius+1)-1; j++)
 	{
-		for(k=0; k<2*(data->height - 2*radius)/(2*radius+1)-1; k++)
+		for(k=0; k<(data->height - 2*radius)/(2*radius+1)-1; k++)
 		{
-			printf("(%d,%d)\t",P[i][j][0],P[i][j][1]);
+			result.pixels[j][k] = (int) lbp[j][k];
 		}
-		printf("\n");
 	}
+    create_cooccurance_matrix(&result,1,0,f);
+    deallocate_dynamic_matrix(result.pixels, result.height);
+    deallocate_dynamic_matrix(lbp, (data->height-2*radius)/(2*radius+1));
 
-return P;
+    return f;
 }
 
 /*  Function to generate the Map M such that
@@ -456,28 +432,27 @@ return P;
  */
 int **generate_M(int N)
 {
-	int i,j, idash, jdash, id=0;
-	int **M = allocate_dynamic_matrix((int) N,(int) N);
+	int i,j, idash, jdash, id=1;
+	int **M = allocate_dynamic_matrix((int) pow(2,N),(int) pow(2,N));
 
 	for(i=0; i<(int) pow(2,N); i++)
 	{
 		for(j=0; j<(int) pow(2,N); j++)
 		{
-              M[i][j] = '$';
+              M[i][j] = (-1);
 		}
 	}
 
-
 	for(i=0; i<(int) pow(2,N); i++)
 	{
-		for(j=0; j<(int) pow(2,N); j++)
+		for(j=0; j<(int)pow(2,N); j++)
 		{
-			if(M[i][j]=='$')
+			if(M[i][j]== -1)
 			{
-				idash = i >>N/2;
-				jdash = j >> N/2;
+				idash = i >> (N/2);
+				jdash = j >> (N/2);
 				M[i][j] = id;
-				M[idash][jdash] = id;
+				M[jdash][idash] = id;
 				id++;
 			}
 		}
@@ -485,18 +460,22 @@ int **generate_M(int N)
     return M;
 }
 
-/* Function to find Rotational Invariant Co-occurrence of adjacent LBP
- *
+/*Function that returns the Co-occurrence of Adjacent LBP matrix of a given image
+ * Arguments: data: The PGM data
+ *            radius: The radius of window to be considered
+ *            no_of_points: No of points in the window
+ *            theta: The angle to be specified
+ *            f: To store the Haralick parameters
  */
-int **calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double theta)
+double* calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double theta, double f[13])
 {
 
 	printf("Finding the Rot Invariant LBP Matrix\n");
 	int i,j,k, jdash, kdash;
-	int **P = allocate_dynamic_matrix((data->width - 2*radius)/(2*radius+1),(data->height - 2*radius)/(2*radius+1));
+	double **P = allocate_dynamic_matrix_double((data->width - 2*radius)/(2*radius+1),(data->height - 2*radius)/(2*radius+1));
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **lbp;
-	lbp = allocate_dynamic_matrix(data->width, data->height);
+	lbp = allocate_dynamic_matrix((data->width - 2*radius)/(2*radius+1), (data->height - 2*radius)/(2*radius+1));
 
 	for(j=0+radius; j<(data->width-radius); j=j+2*radius+1)
 	{
@@ -525,13 +504,9 @@ int **calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double thet
 		        	lbp[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]=lbp[(j-radius)/(2*radius + 1)][(k-radius)/(2*radius + 1)]|0x01;
 		        }
 	        }
-
 	    }
 	}
-
 	int **M = generate_M(no_of_points);
-	printf("Came here");
-
 	for(j=0; j<(data->width - 2*radius)/(2*radius+1); j++)
 		{
 			for(k=0; k<(data->height - 2*radius)/(2*radius+1); k++)
@@ -539,34 +514,23 @@ int **calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double thet
 				int dx = ceil(radius*cos(theta));
 				int dy = ceil(radius*sin(theta));
 
-				if(dx<0 && j+dx <radius) dx = 0;
-				else if(dx>0 && j+dx >=(data->width - 2*radius)/(2*radius+1)) dx=0;
-				else dx = ceil(radius*cos(theta));
+				int jdash,kdash;
+				if(j+dx<0 || j+dx>=(data->width - 2*radius)/(2*radius+1))
+					jdash=j;
+				else jdash=j+dx;
 
-				if(dy<0 && k+dy <radius) dy = 0;
-				else if(dy>0 && k+dy >=(data->height - 2*radius)/(2*radius+1)) dy=0;
-				else dy = ceil(radius*sin(theta));
+				if(k+dy<0 || k+dy>=(data->height - 2*radius)/(2*radius+1))
+					kdash=k;
+				else kdash=k+dy;
 
-				P[j][k] = M[lbp[j][k]][lbp[j+dx][j+dy]];
+				P[j][k] = (double) M[lbp[j][k]][lbp[jdash][kdash]];
 			}
 		}
 
+    calculate_haralick_parameters_RIVLBP(P,f,(data->width - 2*radius)/(2*radius+1),(data->height - 2*radius)/(2*radius+1));
+    deallocate_dynamic_matrix(lbp,(data->height - 2*radius)/(2*radius+1) );
+    deallocate_dynamic_matrix_double(P, (data->height - 2*radius)/(2*radius+1));
+    deallocate_dynamic_matrix(M, (int) pow(2,no_of_points));
 
-		PGMData result;
-	result.width = (data->width - 2*radius)/(2*radius+1);
-	result.height = (data->height - 2*radius)/(2*radius+1);
-	result.max_gray = (int) (pow(2,no_of_points)*(pow(2,no_of_points)+1)/2);
-
-	for(j=0; j<(data->width - 2*radius)/(2*radius+1); j++)
-	{
-		for(k=0; k<(data->height - 2*radius)/(2*radius+1); k++)
-		{
-			result.pixels[j][k] = P[j][k];
-		}
-	}
-
-
-	int hp[2048];
-	calculate_histogram(&result,hp);
-	return P;
+    return f;
 }
