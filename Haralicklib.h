@@ -3,19 +3,16 @@
  * Date:        22 May 2015
 */
 
-
-
 #include <math.h>
 /* Function to calculate Haralick parameters from the concurrence matrix
  * Argurments: P: The cooccurance matrix
  *             data_max_gray: max gray value
  *             fx: The array to store the result*/
-double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
+double *calculate_haralick_parameters(double **P, int data_max_gray, double fx[13])
 {
 
-//	printf("Calculating Haralick parameters\n");
     /*Normalise the matrix*/
-    double N=0;
+	double N=0;
     int i,j,k;
     for(i=0;i<data_max_gray;i++)
     {
@@ -24,7 +21,6 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     		N = N + P[i][j];
     	}
     }
-
     for(i=0;i<data_max_gray;i++)
     {
     	for(j=0;j<data_max_gray;j++)
@@ -34,9 +30,8 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     	}
 
     }
-
     printf("N = %f\tmax gray = %d\n",N,data_max_gray);
-    double Px[1024], Py[1024], ux, uy,u, sx, sy, Pxplusy[2048], Pxminusy[2048];
+    double Px[17000], Py[17000], ux, uy,u, sx, sy, Pxplusy[33000], Pxminusy[33000];
 
     for(i=0; i<data_max_gray; i++)
     {
@@ -94,11 +89,8 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     double HXY1, HXY2, HX=0, HY=0;
     for(i=0; i<data_max_gray; i++)
     {
-        if(Px[i]>0)
-            HX = HX - Px[i]*log(Px[i]);
-            //printf("%f\t%f\n",Px[i],HX);
-       	if(Py[i]>0)
-    	    HY = HY - Py[i]*log(Py[i]);
+        HX = HX - Px[i]*log(Px[i]+0.00000001);
+  	    HY = HY - Py[i]*log(Py[i]+0.00000001);
     }
 
 
@@ -107,10 +99,8 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     {
      	for(j=0; j<data_max_gray; j++)
      	{
-            if(Px[i]*Py[j]!=0)
-       		    HXY1 = HXY1 - P[i][j]*log(Px[i]*Py[j]);
-         	if(Px[i]*Py[j]!=0)
-         		HXY2 = HXY2 - Px[i]*Py[j]*log(Px[i]*Py[j]);
+   		    HXY1 = HXY1 - P[i][j]*log(Px[i]*Py[j] +0.00000001);
+            HXY2 = HXY2 - Px[i]*Py[j]*log(Px[i]*Py[j] +0.00000001);
 
        	}
    	}
@@ -128,13 +118,11 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     	for(j=0;j<data_max_gray; j++)
     	{
     		fx[0] = fx[0] + P[i][j]*P[i][j];
-    		fx[2] = fx[2] + (i-ux)*(i-uy)*P[i][j]/(sx*sy);
+    		fx[2] = fx[2] + (i-ux)*(i-uy)*P[i][j]/(sx*sy +0.00000001);
     		fx[3] = fx[3] + (i-u)*(i-u)*P[i][j];
     		fx[4] = fx[4] + P[i][j]/(1+(i-j)*(i-j));
-    		if(P[i][j]>0)
-    		    fx[8] = fx[8] - P[i][j]*log(P[i][j]);
-    		if(Pxminusy[i]>0)
-    		    fx[10] = fx[10] - Pxminusy[i]*log(Pxminusy[i]);
+    		fx[8] = fx[8] - P[i][j]*log(P[i][j]+0.00000001);
+    		fx[10] = fx[10] - Pxminusy[i]*log(Pxminusy[i]+0.00000001);
     	}
     }
 
@@ -154,8 +142,7 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     for(i=0; i<2*data_max_gray-1; i++)
     {
     	fx[5] = fx[5] + i*Pxplusy[i];
-    	if(Pxplusy[i]>0)
-    	    fx[7] = fx[7] - Pxplusy[i]*log(Pxplusy[i]);
+    	fx[7] = fx[7] - Pxplusy[i]*log(Pxplusy[i]+0.00000001);
     }
 
     for(i=0; i<2*data_max_gray-1; i++)
@@ -176,21 +163,20 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double *fx)
     double t;
     if(HX>HY) t=HX;
     else t=HY;
-    fx[11] = (fx[8]-HXY1)/t;
+    fx[11] = (fx[8]-HXY1)/(t+0.00000001);
     fx[12] = sqrt(1-exp(-2*(HXY2 - fx[8])));
-
-//    printf("\n");
 
     return fx;
 
 }
 
-/* To create co-occurance matrix
- * Arguements: data: The PGM image
+/* To create co-occurrence matrix
+ * Arguments: data: The PGM image
  *             delta: The distance
  *             angle: The config in degrees
+ *             f: To store the haralick parameters
  */
-void create_cooccurance_matrix(PGMData *data, int delta, int angle)
+double *create_cooccurance_matrix(PGMData *data, int delta, int angle, double f[13])
 {
     printf("Creating Co-occurance matrix\n");
 	int delx, dely;
@@ -244,7 +230,7 @@ void create_cooccurance_matrix(PGMData *data, int delta, int angle)
     	}
     }
 
-    double f[13];
+
     printf("Calculating Haralick parameters\n");
     calculate_haralick_parameters(P,data->max_gray,f);
 
@@ -257,6 +243,205 @@ void create_cooccurance_matrix(PGMData *data, int delta, int angle)
     deallocate_dynamic_matrix_double(P, data->max_gray);
 
     printf("\n");
+    return f;
+}
 
+/* Function to write all haralick parameters into a file
+ * Arguments: no: The Serial Number
+ *             f: The array with all paramaters
+ *             name: The name of file
+ *             n: Number of parameters i.e. size of f
+ */
+void write_haralick(int no, double *f, char *name, int n)
+{
+    FILE *train_file;
+    int i;
+    train_file = fopen(name, "ab");
+    if (train_file == NULL) {
+        perror("Cannot open file to write\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(train_file,"%d ",no);
+    for(i=0; i<n; i++)
+    {
+    	fprintf(train_file,"%f ",f[i]);
+    }
+    fprintf(train_file,"\n");
+}
+
+/* Function to calculate Haralick parameters from the concurrence matrix
+ * Argurments: P: The cooccurance matrix
+ *             mxn: Size of array
+ *             fx: The array to store the result*/
+double *calculate_haralick_parameters_RIVLBP(double **P, double fx[13], int m, int n)
+{
+
+//	printf("Calculating Haralick parameters\n");
+    /*Normalise the matrix*/
+	double N=0;
+    int i,j,k;
+    for(i=0;i<m;i++)
+    {
+    	for(j=0;j<n;j++)
+    	{
+    		N = N + P[i][j];
+    	}
+    }
+    for(i=0;i<m;i++)
+    {
+    	for(j=0;j<n;j++)
+    	{
+    		P[i][j] = P[i][j]/N;
+
+    	}
+
+    }
+//    printf("N = %f\tmax gray = %d\n",N,data_max_gray);
+    double Px[17000], Py[17000], ux, uy,u, sx, sy, Pxplusy[33000], Pxminusy[33000];
+
+    for(i=0; i<m; i++)
+    {
+    	Px[i]=0;
+       	Py[i]=0;
+       	for(j=0; j<n; j++)
+       	{
+       		Px[i] = Px[i]+P[i][j];
+       		Py[i] = Py[i]+P[j][i];
+       	}
+    }
+
+    ux=0; uy=0, u=0;
+    for(i=0;i<m;i++)
+    {
+      	ux = ux + i*Px[i];
+    }
+    for(i=0; i<n; i++)
+    {
+       	uy = uy + i*Py[i];
+    }
+
+    for(k=0; k<m+n-1; k++)
+    {
+       	Pxplusy[k]=0;
+       	Pxminusy[k]=0;
+    }
+
+
+
+    for(i=0; i<m; i++)
+    {
+       	for(j=0; j<n; j++)
+       	{
+       		Pxplusy[i+j] = Pxplusy[i+j]+P[i][j];
+       		if(i>=j)
+       			Pxminusy[i-j] = Pxminusy[i-j]+P[i][j];
+       		else
+       			Pxminusy[j-i] = Pxminusy[j-i]+P[i][j];
+
+      	}
+    }
+
+    u = 0.5* ux+ 0.5*uy;
+
+    sx = 0; sy = 0;
+    for(i=0; i<m; i++)
+    {
+      	sx = sx+Px[i]*(i-ux)*(i-ux);
+    }
+    for(i=0; i<n; i++)
+    {
+       	sy = sy+Py[i]*(i-uy)*(i-uy);
+    }
+
+
+    sx = sqrt(sx);
+    sy = sqrt(sy);
+
+
+    double HXY1, HXY2, HX=0, HY=0;
+    for(i=0; i<m; i++)
+    {
+        HX = HX - Px[i]*log(Px[i]+0.00000001);
+    }
+    for(i=0; i<n; i++)
+    {
+  	    HY = HY - Py[i]*log(Py[i]+0.00000001);
+    }
+
+
+    HXY1 = 0; HXY2 = 0;
+    for(i=0; i<m; i++)
+    {
+     	for(j=0; j<n; j++)
+     	{
+   		    HXY1 = HXY1 - P[i][j]*log(Px[i]*Py[j] +0.00000001);
+            HXY2 = HXY2 - Px[i]*Py[j]*log(Px[i]*Py[j] +0.00000001);
+       	}
+   	}
+
+
+
+    printf("ux = %g\t\tuy = %g\t\tsx = %g\t\tsy=%g\t\tu = %f\n",ux,uy,sx,sy,u);
+    printf("HXY1 = %g\t\tHXY2 = %g\t\tHX = %g\t\tHY = %g\n",HXY1,HXY2,HX,HY);
+
+
+    for(i=0; i<14; i++)
+        fx[i]=0;
+    for(i=0; i<m; i++)
+    {
+    	for(j=0;j<n; j++)
+    	{
+    		fx[0] = fx[0] + P[i][j]*P[i][j];
+    		fx[2] = fx[2] + (i-ux)*(i-uy)*P[i][j]/(sx*sy +0.00000001);
+    		fx[3] = fx[3] + (i-u)*(i-u)*P[i][j];
+    		fx[4] = fx[4] + P[i][j]/(1+(i-j)*(i-j));
+    		fx[8] = fx[8] - P[i][j]*log(P[i][j]+0.00000001);
+    		fx[10] = fx[10] - Pxminusy[i]*log(Pxminusy[i]+0.00000001);
+    	}
+    }
+
+
+    int x;
+    if(m>n) x=m;
+    else x=n;
+    for(k=0; k<x; k++)
+    {
+    	for(i=0; i<m; i++)
+    	{
+    		for(j=0; j<n; j++)
+    		{
+    			if(i-j == k)
+    				fx[1]=fx[1]+ P[i][j]*k*k;
+    		}
+    	}
+    }
+    for(i=0; i<m+n-1; i++)
+    {
+    	fx[5] = fx[5] + i*Pxplusy[i];
+    	fx[7] = fx[7] - Pxplusy[i]*log(Pxplusy[i]+0.00000001);
+    }
+
+    for(i=0; i<m+n-1; i++)
+    {
+    	fx[6] = fx[6] + (i-fx[5])*(i-fx[5])*Pxplusy[i];
+    }
+
+    for(i=0; i<m; i++)
+    {
+    	double temp=0;
+    	for(j=0; j<n; j++)
+    	{
+    		temp = temp + j*Pxminusy[j];
+    	}
+    	fx[9] = fx[9] + (i-temp)*(i-temp)*Pxminusy[i];
+    }
+
+    double t;
+    if(HX>HY) t=HX;
+    else t=HY;
+    fx[11] = (fx[8]-HXY1)/(t+0.00000001);
+    fx[12] = sqrt(1-exp(-2*(HXY2 - fx[8])));
+
+    return fx;
 
 }
