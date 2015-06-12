@@ -7,6 +7,8 @@
  * after rotating it right and comparing with the rest.
  */
 
+
+
 #define S(X1,X2) ((X1>=X2)?1:0)
 #define f(x,y) ((x==y)?1:0)
 #define t(x,c) ((x>=c)?1:0)
@@ -80,7 +82,7 @@ void calculate_histogram(PGMData *data, int *h)
  */
 PGMData calculate_LBP(PGMData *data, int radius, int no_of_points)
 {
-	printf("Finding the LBP Matrix\n");
+//	printf("Finding the LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **lbp;
@@ -137,20 +139,14 @@ PGMData calculate_LBP(PGMData *data, int radius, int no_of_points)
 	char ver=1;
 	deallocate_dynamic_matrix(lbp, result.height);
 
-	writePGM("LBP.pgm",&result,ver);
+//	writePGM("LBP.pgm",&result,ver);
 
 	return result;
 }
 
-/*Function that returns the Rotational Invariant Uniform LBP matrix of a given image
- * Arguments: data: The PGM data
- *            radius: The radius of window to be considered
- *            no_of_points: No of points in the window
- */
-
 PGMData calculate_LBPriu2(PGMData *data, int radius, int no_of_points)
 {
-	printf("Finding the Uniform Rotational Invariant LBP Matrix\n");
+//	printf("Finding the Uniform Rotational Invariant LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **lbp;
@@ -212,20 +208,14 @@ PGMData calculate_LBPriu2(PGMData *data, int radius, int no_of_points)
 	char ver=1;
 	deallocate_dynamic_matrix(lbp, result.height);
 
-	writePGM("LBPriu2.pgm",&result,ver);
+//	writePGM("LBPriu2.pgm",&result,ver);
 	return result;
 
 }
 
-/*Function that returns the LBP matrix of a given image
- * Arguments: data: The PGM data
- *            radius: The radius of window to be considered
- *            no_of_points: No of points in the window
- *                       f: An array to store the Haralick parameters
- */
 double *calculate_completed_LBP(PGMData *data, int radius, int no_of_points, double f[39])
 {
-	printf("\nFinding the Completed LBP Matrix\n");
+//	printf("\nFinding the Completed LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double average=0;
 	for(i=0; i<data->width; i++)
@@ -352,16 +342,13 @@ double *calculate_completed_LBP(PGMData *data, int radius, int no_of_points, dou
 }
 
 
-/*Function that returns the Co-occurrence of Adjacent LBP matrix of a given image
- * Arguments: data: The PGM data
- *            radius: The radius of window to be considered
- *            no_of_points: No of points in the window
- *            f: To store the Haralick parameters
+/* Function to find the co-occurrence of adjacent LBP of a pic
+ *  Returns a 3D array
  */
 double *calculate_CoALBP(PGMData *data, int radius, int no_of_points, double f[13])
 {
 
-	printf("\nFinding the LBP Matrix\n");
+//	printf("\nFinding the LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
 	int **lbp;
@@ -460,17 +447,13 @@ int **generate_M(int N)
     return M;
 }
 
-/*Function that returns the Co-occurrence of Adjacent LBP matrix of a given image
- * Arguments: data: The PGM data
- *            radius: The radius of window to be considered
- *            no_of_points: No of points in the window
- *            theta: The angle to be specified
- *            f: To store the Haralick parameters
+/* Function to find Rotational Invariant Co-occurrence of adjacent LBP
+ *
  */
 double* calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double theta, double f[13])
 {
 
-	printf("Finding the Rot Invariant LBP Matrix\n");
+//	printf("Finding the Rot Invariant LBP Matrix\n");
 	int i,j,k, jdash, kdash;
 	double **P = allocate_dynamic_matrix_double((data->width - 2*radius)/(2*radius+1),(data->height - 2*radius)/(2*radius+1));
 	double del_theta = 2*3.14159265/no_of_points, delx, dely;
@@ -506,6 +489,7 @@ double* calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double th
 	        }
 	    }
 	}
+
 	int **M = generate_M(no_of_points);
 	for(j=0; j<(data->width - 2*radius)/(2*radius+1); j++)
 		{
@@ -528,9 +512,9 @@ double* calculate_RIV_LBP(PGMData *data, int radius, int no_of_points, double th
 		}
 
     calculate_haralick_parameters_RIVLBP(P,f,(data->width - 2*radius)/(2*radius+1),(data->height - 2*radius)/(2*radius+1));
-    deallocate_dynamic_matrix(lbp,(data->height - 2*radius)/(2*radius+1) );
-    deallocate_dynamic_matrix_double(P, (data->height - 2*radius)/(2*radius+1));
     deallocate_dynamic_matrix(M, (int) pow(2,no_of_points));
+    deallocate_dynamic_matrix_double(P,(data->width - 2*radius)/(2*radius+1));
+    deallocate_dynamic_matrix(lbp,(data->width - 2*radius)/(2*radius+1));
 
     return f;
 }
