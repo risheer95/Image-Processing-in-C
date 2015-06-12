@@ -3,6 +3,8 @@
  * Date:        22 May 2015
 */
 
+
+
 #include <math.h>
 /* Function to calculate Haralick parameters from the concurrence matrix
  * Argurments: P: The cooccurance matrix
@@ -11,6 +13,7 @@
 double *calculate_haralick_parameters(double **P, int data_max_gray, double fx[13])
 {
 
+//	printf("Calculating Haralick parameters\n");
     /*Normalise the matrix*/
 	double N=0;
     int i,j,k;
@@ -30,7 +33,7 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double fx[1
     	}
 
     }
-    printf("N = %f\tmax gray = %d\n",N,data_max_gray);
+//    printf("N = %f\tmax gray = %d\n",N,data_max_gray);
     double Px[17000], Py[17000], ux, uy,u, sx, sy, Pxplusy[33000], Pxminusy[33000];
 
     for(i=0; i<data_max_gray; i++)
@@ -107,8 +110,8 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double fx[1
 
 
 
-    printf("ux = %g\t\tuy = %g\t\tsx = %g\t\tsy=%g\t\tu = %f\n",ux,uy,sx,sy,u);
-    printf("HXY1 = %g\t\tHXY2 = %g\t\tHX = %g\t\tHY = %g\n",HXY1,HXY2,HX,HY);
+//    printf("ux = %g\t\tuy = %g\t\tsx = %g\t\tsy=%g\t\tu = %f\n",ux,uy,sx,sy,u);
+//    printf("HXY1 = %g\t\tHXY2 = %g\t\tHX = %g\t\tHY = %g\n",HXY1,HXY2,HX,HY);
 
 
     for(i=0; i<14; i++)
@@ -170,15 +173,14 @@ double *calculate_haralick_parameters(double **P, int data_max_gray, double fx[1
 
 }
 
-/* To create co-occurrence matrix
- * Arguments: data: The PGM image
+/* To create co-occurance matrix
+ * Arguements: data: The PGM image
  *             delta: The distance
  *             angle: The config in degrees
- *             f: To store the haralick parameters
  */
 double *create_cooccurance_matrix(PGMData *data, int delta, int angle, double f[13])
 {
-    printf("Creating Co-occurance matrix\n");
+//    printf("Creating Co-occurance matrix\n");
 	int delx, dely;
     if(angle == 0)
     {
@@ -231,27 +233,23 @@ double *create_cooccurance_matrix(PGMData *data, int delta, int angle, double f[
     }
 
 
-    printf("Calculating Haralick parameters\n");
+//    printf("Calculating Haralick parameters\n");
     calculate_haralick_parameters(P,data->max_gray,f);
-
+/*
     printf("Haralicks PARAMETERS\n");
     for(i=0; i<13; i++)
     {
     	printf("f%d = %g\t\t",i+1, f[i]);
     	if(i%3==2) printf("\n");
     }
+*/
     deallocate_dynamic_matrix_double(P, data->max_gray);
 
-    printf("\n");
+//    printf("\n");
     return f;
 }
 
-/* Function to write all haralick parameters into a file
- * Arguments: no: The Serial Number
- *             f: The array with all paramaters
- *             name: The name of file
- *             n: Number of parameters i.e. size of f
- */
+
 void write_haralick(int no, double *f, char *name, int n)
 {
     FILE *train_file;
@@ -269,10 +267,7 @@ void write_haralick(int no, double *f, char *name, int n)
     fprintf(train_file,"\n");
 }
 
-/* Function to calculate Haralick parameters from the concurrence matrix
- * Argurments: P: The cooccurance matrix
- *             mxn: Size of array
- *             fx: The array to store the result*/
+
 double *calculate_haralick_parameters_RIVLBP(double **P, double fx[13], int m, int n)
 {
 
@@ -381,8 +376,8 @@ double *calculate_haralick_parameters_RIVLBP(double **P, double fx[13], int m, i
 
 
 
-    printf("ux = %g\t\tuy = %g\t\tsx = %g\t\tsy=%g\t\tu = %f\n",ux,uy,sx,sy,u);
-    printf("HXY1 = %g\t\tHXY2 = %g\t\tHX = %g\t\tHY = %g\n",HXY1,HXY2,HX,HY);
+//    printf("ux = %g\t\tuy = %g\t\tsx = %g\t\tsy=%g\t\tu = %f\n",ux,uy,sx,sy,u);
+//    printf("HXY1 = %g\t\tHXY2 = %g\t\tHX = %g\t\tHY = %g\n",HXY1,HXY2,HX,HY);
 
 
     for(i=0; i<14; i++)
@@ -415,6 +410,7 @@ double *calculate_haralick_parameters_RIVLBP(double **P, double fx[13], int m, i
     		}
     	}
     }
+
     for(i=0; i<m+n-1; i++)
     {
     	fx[5] = fx[5] + i*Pxplusy[i];
@@ -444,4 +440,21 @@ double *calculate_haralick_parameters_RIVLBP(double **P, double fx[13], int m, i
 
     return fx;
 
+}
+
+void write_SVM_format(double f[], char name[], int clas, int n)
+{
+    FILE *train_file;
+    int i;
+    train_file = fopen(name, "ab");
+    if (train_file == NULL) {
+        perror("Cannot open file to write\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(train_file,"%d \t",clas);
+    for(i=0; i<n-1; i++)
+    {
+    	fprintf(train_file,"%d:%f \t",i+1,f[i]);
+    }
+    fprintf(train_file,"%d:%f\n",n,f[n-1]);
 }
