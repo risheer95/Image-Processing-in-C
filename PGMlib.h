@@ -199,7 +199,7 @@ PGMData* readPGM(const char *file_name, PGMData *data)
     	fprintf(stderr, "Wrong file type!\n");
         exit(1);
     }
-    printf("Opened file %s\n",file_name);
+//    printf("Opened file %s\n",file_name);
 
     /* Reading width, height, max gray values */
     skip_comments(pgm_file);
@@ -261,7 +261,7 @@ PGMData* normalisePGM(PGMData *data, int value)
 			    data->pixels[i][j]/=(data->max_gray/value);
 
 	data->max_gray = value;
-	printf("Successfully read file\n");
+//	printf("Successfully read file\n");
 	return data;
 }
 
@@ -326,6 +326,32 @@ void writePGM(const char *filename, PGMData *data, char ver)
     //deallocate_dynamic_matrix(data->pixels, data->row);
 }
 
+PGMData make_PGM(double **pixels, int width, int height)
+{
+	int i,j;
+	double max=pixels[0][0], min = pixels[0][0];
+	for(i=0; i<width; i++)
+	{
+		for(j=0; j<height; j++)
+		{
+			if(pixels[i][j]>max) max = pixels[i][j];
+			if(pixels[i][j]<min) min = pixels[i][j];
+		}
+	}
+	PGMData write;
+	write.pixels = allocate_dynamic_matrix(width, height);
+	write.width = width;
+	write.height = height;
+	write.max_gray = 512;
+	for(i=0; i<width; i++)
+	{
+		for(j=0; j<height; j++)
+		{
+			write.pixels[i][j] = ((pixels[i][j]-min)/(max-min)*255);
+		}
+	}
+	return write;
+}
 /* To print the structure's data */
 void printPGM(PGMData picture)
 {
