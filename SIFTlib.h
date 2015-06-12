@@ -90,7 +90,7 @@ double **convolve(int **in, int m, int n, double **coeffs, int K)
 	return out;
 }
 
-/* Function to downsample the picture to the given octave 
+/* Function to downsample the picture to the given octave
 *  Arguments: data: The pic to be downsampled
 *                o: Specify octave
 *             down: Empty object to store result into
@@ -113,7 +113,7 @@ void down_sample_pic(PGMData *data, int o, PGMData *down)
 
 /* Function to calculate key_points based on local maxima
 *  Arguments: data: The picture
-*                o: The octave 
+*                o: The octave
 *          key_loc: Empty array to store the location of key_points
 *                   Even terms contain x coordinate, odd terms cotain y coordinates
 *          key_mag: Empty array to be passed as argument to store magnitude of key_points
@@ -237,7 +237,7 @@ int calculate_keypoints(PGMData *data, int o, int *key_loc, double *key_mag)
     return mag_count;
 }
 
-/* To find the inverse of a 3x3 matrix 
+/* To find the inverse of a 3x3 matrix
 * a is the input matrix
 * inverse is the empty matrix to store the inverse into
 */
@@ -256,7 +256,7 @@ void find_inverse(double a[3][3], double inverse[3][3])
 
 /* Function to calculate key_points based on curve fitting with contrast setting and edge rejection
 *  Arguments: data: The picture
-*                o: The octave 
+*                o: The octave
 *          key_loc: Empty array to store the location of key_points
 *                   Even terms contain x coordinate, odd terms cotain y coordinates
 *          key_mag: Empty array to be passed as argument to store magnitude of key_points
